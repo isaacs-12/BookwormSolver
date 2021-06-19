@@ -8,10 +8,12 @@ from os import name
 from PIL import Image
 import os.path, sys
 import csv
-# import cv2
-# import numpy as np
-# import pytesseract
+import cv2
+import numpy as np
+import pytesseract
+import matplotlib.pyplot as plt
 from collections import namedtuple
+from PIL import Image, ImageDraw
 
 # Defs
 Node = namedtuple('Node', 'nodeId value edges')
@@ -55,7 +57,7 @@ graphMapping = {
     33:[25,26,32,34,40,41],
     34:[26,27,33,35,41,42],
     35:[27,28,34,36,42,43],
-    36:[28,2935,43,44],
+    36:[28,29,35,43,44],
     37:[30,38,45],
     38:[30,31,37,39,43,46],
     39:[31,32,38,40,46,47],
@@ -75,8 +77,9 @@ graphMapping = {
 
 # locationsFile = 'C:\Users\Isaac\Documents\BookwormSolver\BookwormLetterLocationsPIXEL.csv'
 # outputDestination = 'C:\Users\Isaac\Documents\BookwormSolver\Letters'
-# thresholdOutputDestination = 'C:\Users\Isaac\Documents\BookwormSolver\Letters'
+thresholdOutputDestination = 'Letters'
 # testFile = 'C:\Users\Isaac\Documents\BookwormSolver\TestBoard.png'
+testLetterCrops = 'TestCroppedLetters'
 
 # Screenshot board
 
@@ -90,31 +93,43 @@ graphMapping = {
 #         imCrop = im.crop(location[0], location[1], location[2], location[3])
 #         imCrop.save(outputDestination + str(i) + '_.png', quality=100)
 
+def processImg3(img):
+    gray_image = cv2.imread(img, 0)
+
+
+    z = np.array(gray_image)
+
+
+    # specify circle parameters: centre ij and radius
+    (x,y) = z.shape
+    (ci,cj) = (int(x/2), int(y/2))
+    cr=int(y*.5*.7)
+
+    # Min the value outside the letter radius
+    for i in range(x):
+        for j in range(y):
+            if np.sqrt((i-ci)**2+(j-cj)**2) > cr:
+                z[i][j] = 400
+
+    ret,thresh_binary_inv = cv2.threshold(z,127,255,cv2.THRESH_BINARY)
+    # cv2.imshow("thresh_binary", thresh_binary_inv)
+    # cv2.waitKey(0)
+    image_from_array = Image.fromarray(z)
+    #We can send the array directly to OCR, but I like to see the image.
+    image_from_array.save("z.png")
+    text = pytesseract.image_to_string(image_from_array, lang='eng', config='--psm 10')
+    return text.upper()
+
 # Loop over the letter images, use OpenCV to read the letter
-def genLetterArray():
+def genLetterArray(lettersPath):
     letters = []
-    # for i, filename in os.listdir(outputDestination):
-    #         # Reading picture with opencv
-    #     pic = cv2.imread(filename)
-        
-    #     # grey-scale the picture
-    #     pic = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
-        
-    #     # Do dilation and erosion to eliminate unwanted noises
-    #     kernel = np.ones((1, 1), np.uint8)
-    #     pic = cv2.dilate(pic, kernel, iterations=20)
-    #     pic = cv2.erode(pic, kernel, iterations=20)
-        
-    #     #  threshold applying to get only black and white picture 
-    #     pic = cv2.adaptiveThreshold(pic, 300, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 2)
-        
-    #     # Write the image for later recognition process 
-    #     cv2.imwrite(thresholdOutputDestination + str(i) + "threshold.png", pic)
-        
-    #     # Character recognition with tesseract
-    #     final = pytesseract.image_to_string(Image.open(thresholdOutputDestination + str(i) + "threshold.png"))
-    #     print('Letter {index}: {value}'.format(str(i). final))
-    #     letters.append(final)
+    for filename in os.listdir(lettersPath):
+        # Reading picture with opencv
+        img = lettersPath + '/' + filename
+        text = processImg3(img)
+        # print('Should have been: {}, got {}'.format(filename.split('_')[0], text))
+
+        letters.append(text)
     # return letters
     return testArray
 
@@ -134,8 +149,9 @@ def generateGraph(array):
 def main():
     # im = getGameBoard()
     # genLetterCrops(im)
-    letters = genLetterArray()
+    print('getting letters...')
+    letters = genLetterArray(testLetterCrops)
+    print('generating graph...')
     graph = generateGraph(letters)
+    print('returning graph...')
     return graph
-
-main()
