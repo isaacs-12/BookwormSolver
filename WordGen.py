@@ -4,6 +4,7 @@ from typing import Mapping
 import LetterGetter
 
 dictFile = "TestWords.txt"
+allWords = "FullUncompressedDict.txt"
 
 foundWords = []
 
@@ -21,21 +22,16 @@ def find_all_words(graph: Graph, startNode: LetterGetter.Node, prefixes, validWo
     global foundWords
 
     soFar = genWordFromPath(graph, path)
-    # print("soFar:"+ soFar)
-    # print("Path: {}".format(path))
-    # print(prefixes)
+
     if soFar in validWords:
         # We found a valid word but aren't necessarily at a dead end
         foundWords += [soFar]
-        print("Found word: " + soFar)
     for n in graph[startNode.nodeId].edges:
         newNode = graph[n]
-        # print("Path: {}, new Node: {}".format(path, newNode) )
         if newNode.nodeId not in path:
             newPath = path + [newNode.nodeId]
             if str(genWordFromPath(graph, newPath)) not in prefixes:
                 # We are at a dead end/went too far
-                # print("SoFar is not in prefixes, dead end")
                 continue
             return find_all_words(graph, newNode, prefixes, validWords, newPath)
 
@@ -66,14 +62,13 @@ def dictWords(words):
 
 def main():
     graph = LetterGetter.main()
-    print(graph)
-    words = open(dictFile, 'r').readlines()
+    words = open(allWords, 'r').readlines()
 
     validWords = dictWords(words)
-    print("ValidWords List: {}\n".format(validWords))
+
+    print('sod' in validWords)
 
     prefixes = getPrefixes(validWords)
-    print("Prefixes List: {}\n".format(prefixes))
     
     traverseGraph(graph, prefixes, validWords)
     global foundWords
