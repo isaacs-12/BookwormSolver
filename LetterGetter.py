@@ -8,9 +8,9 @@ from os import name
 from PIL import Image
 import os.path, sys
 import csv
-# import cv2
-# import numpy as np
-# import pytesseract
+import cv2
+import numpy as np
+import pytesseract
 from collections import namedtuple
 
 # Defs
@@ -75,8 +75,9 @@ graphMapping = {
 
 # locationsFile = 'C:\Users\Isaac\Documents\BookwormSolver\BookwormLetterLocationsPIXEL.csv'
 # outputDestination = 'C:\Users\Isaac\Documents\BookwormSolver\Letters'
-# thresholdOutputDestination = 'C:\Users\Isaac\Documents\BookwormSolver\Letters'
+thresholdOutputDestination = 'Letters'
 # testFile = 'C:\Users\Isaac\Documents\BookwormSolver\TestBoard.png'
+testLetterCrops = 'TestCroppedLetters'
 
 # Screenshot board
 
@@ -90,31 +91,72 @@ graphMapping = {
 #         imCrop = im.crop(location[0], location[1], location[2], location[3])
 #         imCrop.save(outputDestination + str(i) + '_.png', quality=100)
 
+def processImg2(img):
+    # first multiplied by themselves four times to crank up contrast, 
+    # and then pixels are considered "dark" if their value is less than 1/6 of the brightest pixel of the tile.
+    print("Filename: {}".format(img))
+    pic = cv2.imread(img)
+    a = np.array(pic)
+    ones = np.ones((len(a), len(a[0]), 3))
+    pic1=pic**4
+    pic1=pic1.astype('uint8')           
+    cv2.imshow("image", pic1)
+    cv2.waitKey(0)
+
+    ones[0][0][0]=np.array(pic1)[0][0][0].max()*ones[0][0][0]
+    ones[0][0][1]=np.array(pic1)[0][0][1].max()*ones[0][0][1]
+    ones[0][0][2]=np.array(pic1)[0][0][2].max()*ones[0][0][2]
+    
+
+    pic1=pic1.astype('uint8')           
+    cv2.imshow("image", np.array(pic1)[0])
+    cv2.waitKey(0)
+
+    return pic1
+
+
+def processImg1(img):
+    # Reading picture with opencv
+    print("Filename: {}".format(img))
+    pic = cv2.imread(img)
+    text = pytesseract.image_to_string(pic)
+    print('1 Read: {}'.format(text))
+    
+    # grey-scale the picture
+    pic = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
+    text = pytesseract.image_to_string(pic)
+    print('2 Read: {}'.format(text))
+    
+    # Do dilation and erosion to eliminate unwanted noises
+    kernel = np.ones((1, 1), np.uint8)
+    pic = cv2.dilate(pic, kernel, iterations=20)
+    pic = cv2.erode(pic, kernel, iterations=20)
+    text = pytesseract.image_to_string(pic)
+    print('3 Read: {}'.format(text))
+    
+    #  threshold applying to get only black and white picture 
+    pic = cv2.adaptiveThreshold(pic, 300, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 2)
+    text = pytesseract.image_to_string(pic)
+    print('4 Read: {}'.format(text))
+
+    return pic
 # Loop over the letter images, use OpenCV to read the letter
-def genLetterArray():
+def genLetterArray(lettersPath):
     letters = []
-    # for i, filename in os.listdir(outputDestination):
-    #         # Reading picture with opencv
-    #     pic = cv2.imread(filename)
+    for filename in os.listdir(lettersPath):
+        # Reading picture with opencv
+        img = lettersPath + '/' + filename
+        # pic1 = processImg1(img)
+        pic2 = processImg2(img)
+        print('Should have been: {}'.format(filename.split('_')[0]))
+
+        # # Write the image for later recognition process 
+        # cv2.imwrite(thresholdOutputDestination + str(i) + "threshold.png", pic)
         
-    #     # grey-scale the picture
-    #     pic = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
-        
-    #     # Do dilation and erosion to eliminate unwanted noises
-    #     kernel = np.ones((1, 1), np.uint8)
-    #     pic = cv2.dilate(pic, kernel, iterations=20)
-    #     pic = cv2.erode(pic, kernel, iterations=20)
-        
-    #     #  threshold applying to get only black and white picture 
-    #     pic = cv2.adaptiveThreshold(pic, 300, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 2)
-        
-    #     # Write the image for later recognition process 
-    #     cv2.imwrite(thresholdOutputDestination + str(i) + "threshold.png", pic)
-        
-    #     # Character recognition with tesseract
-    #     final = pytesseract.image_to_string(Image.open(thresholdOutputDestination + str(i) + "threshold.png"))
-    #     print('Letter {index}: {value}'.format(str(i). final))
-    #     letters.append(final)
+        # # Character recognition with tesseract
+        # final = pytesseract.image_to_string(Image.open(thresholdOutputDestination + str(i) + "threshold.png"))
+        # print('Letter {index}: {value}'.format(str(i). final))
+        # letters.append(final)
     # return letters
     return testArray
 
@@ -131,11 +173,10 @@ def generateGraph(array):
     return graph
 
 
-def main():
-    # im = getGameBoard()
-    # genLetterCrops(im)
-    letters = genLetterArray()
-    graph = generateGraph(letters)
-    return graph
 
-main()
+# im = getGameBoard()
+# genLetterCrops(im)
+print('getting letters...')
+letters = genLetterArray(testLetterCrops)
+graph = generateGraph(letters)
+# return graph
