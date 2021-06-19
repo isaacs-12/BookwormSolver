@@ -57,7 +57,7 @@ graphMapping = {
     33:[25,26,32,34,40,41],
     34:[26,27,33,35,41,42],
     35:[27,28,34,36,42,43],
-    36:[28,2935,43,44],
+    36:[28,29,35,43,44],
     37:[30,38,45],
     38:[30,31,37,39,43,46],
     39:[31,32,38,40,46,47],
@@ -112,12 +112,12 @@ def processImg3(img):
                 z[i][j] = 400
 
     ret,thresh_binary_inv = cv2.threshold(z,127,255,cv2.THRESH_BINARY)
-    cv2.imshow("thresh_binary", thresh_binary_inv)
-    cv2.waitKey(0)
+    # cv2.imshow("thresh_binary", thresh_binary_inv)
+    # cv2.waitKey(0)
     image_from_array = Image.fromarray(z)
     #We can send the array directly to OCR, but I like to see the image.
     image_from_array.save("z.png")
-    text = pytesseract.image_to_string("z.png", lang='eng', config='--psm 10')
+    text = pytesseract.image_to_string(image_from_array, lang='eng', config='--psm 10')
     return text.upper()
 
 # Loop over the letter images, use OpenCV to read the letter
@@ -126,10 +126,8 @@ def genLetterArray(lettersPath):
     for filename in os.listdir(lettersPath):
         # Reading picture with opencv
         img = lettersPath + '/' + filename
-        # pic1 = processImg1(img)
-        # pic2 = processImg2(img)
         text = processImg3(img)
-        print('Should have been: {}, got {}'.format(filename.split('_')[0], text))
+        # print('Should have been: {}, got {}'.format(filename.split('_')[0], text))
 
         letters.append(text)
     # return letters
@@ -148,10 +146,12 @@ def generateGraph(array):
     return graph
 
 
-
-# im = getGameBoard()
-# genLetterCrops(im)
-print('getting letters...')
-letters = genLetterArray(testLetterCrops)
-graph = generateGraph(letters)
-print(graph)
+def main():
+    # im = getGameBoard()
+    # genLetterCrops(im)
+    print('getting letters...')
+    letters = genLetterArray(testLetterCrops)
+    print('generating graph...')
+    graph = generateGraph(letters)
+    print('returning graph...')
+    return graph
