@@ -11,14 +11,16 @@ for word in words:
     compressedWords.append(word.split('\n')[0])
 
 prev = compressedWords[0]
+lastPrefix = ''
 for c in compressedWords:
     lint = re.findall(r'\d+', c)
     stri = re.findall(r'[a-zA-Z]+', c)
     prefix = ''
     if len(lint) != 0:
         prefix = prev[:int(lint[0])]
+        lastPrefix = prefix
     else:
-        prefix = prev
+        prefix = lastPrefix
     next = prefix + stri[0]
     uncompressedWords.append(next)
     prev = next

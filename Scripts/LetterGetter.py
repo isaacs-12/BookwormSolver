@@ -75,23 +75,22 @@ graphMapping = {
     51:[43,44,50]
 }
 
-# locationsFile = 'C:\Users\Isaac\Documents\BookwormSolver\BookwormLetterLocationsPIXEL.csv'
-# outputDestination = 'C:\Users\Isaac\Documents\BookwormSolver\Letters'
-thresholdOutputDestination = 'Letters'
-# testFile = 'C:\Users\Isaac\Documents\BookwormSolver\TestBoard.png'
-testLetterCrops = 'TestCroppedLetters'
+locationsFile = '../BookwormLetterLocationsRELATIVE.csv'
+outputDestination = '../Letters'
+testFile = '../Images/TestBoard.png'
+testLetterCrops = '../TestCroppedLetters'
 
 # Screenshot board
 
-# def getGameBoard():
-#     # TODO
-#     return Image.open(testFile)
+def getGameBoard():
+    # TODO
+    return Image.open(testFile)
 
-# # Loop over letter zones to make 56 images for the graph
-# def genLetterCrops(im):
-#     for i, location in enumerate(locations[1:]):
-#         imCrop = im.crop(location[0], location[1], location[2], location[3])
-#         imCrop.save(outputDestination + str(i) + '_.png', quality=100)
+# Loop over letter zones to make 52 images for the graph
+def genLetterCrops(im):
+    for i, location in enumerate(locations[1:]):
+        imCrop = im.crop(location[0], location[1], location[2], location[3])
+        imCrop.save(outputDestination + str(i) + '_.png', quality=100)
 
 def processImg3(img):
     gray_image = cv2.imread(img, 0)
@@ -106,14 +105,13 @@ def processImg3(img):
     cr=int(y*.5*.7)
 
     # Min the value outside the letter radius
+    maxPix = z.max()
     for i in range(x):
         for j in range(y):
             if np.sqrt((i-ci)**2+(j-cj)**2) > cr:
-                z[i][j] = 400
+                z[i][j] = maxPix
 
     ret,thresh_binary_inv = cv2.threshold(z,127,255,cv2.THRESH_BINARY)
-    # cv2.imshow("thresh_binary", thresh_binary_inv)
-    # cv2.waitKey(0)
     image_from_array = Image.fromarray(z)
     #We can send the array directly to OCR, but I like to see the image.
     image_from_array.save("z.png")
@@ -127,7 +125,7 @@ def genLetterArray(lettersPath):
         # Reading picture with opencv
         img = lettersPath + '/' + filename
         text = processImg3(img)
-        # print('Should have been: {}, got {}'.format(filename.split('_')[0], text))
+        print('Should have been: {}, got {}'.format(filename.split('_')[0], text))
 
         letters.append(text)
     # return letters

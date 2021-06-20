@@ -23,7 +23,7 @@ def find_all_words(graph: Graph, startNode: LetterGetter.Node, prefixes, validWo
 
     soFar = genWordFromPath(graph, path)
 
-    if soFar in validWords:
+    if soFar in validWords and len(soFar) >= 3:
         # We found a valid word but aren't necessarily at a dead end
         foundWords += [soFar]
     for n in graph[startNode.nodeId].edges:
@@ -65,10 +65,10 @@ def main():
     words = open(allWords, 'r').readlines()
 
     validWords = dictWords(words)
-
-    print('sod' in validWords)
+    print(len(validWords))
 
     prefixes = getPrefixes(validWords)
+    print(len(prefixes))
     
     traverseGraph(graph, prefixes, validWords)
     global foundWords
