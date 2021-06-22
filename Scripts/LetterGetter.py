@@ -122,16 +122,70 @@ def processFireTile(img_color, img_grey):
     (ci,cj) = (int(x/2), int(y/2))
     cr=int(y*.5*.65)
 
-
-    # img = cv2.medianBlur(img_grey,15)
      # define range of black color in HSV
     lower_val = np.array([0,0,0])
-    upper_val = np.array([179,255,127])
+    upper_val = np.array([179,255,150])
 
     # Threshold the HSV image to get only black colors
     mask = cv2.inRange(img_color, lower_val, upper_val)
+    
     # invert mask to get black symbols on white background
     mask_inv = cv2.bitwise_not(mask)
+
+    # Min the value outside the letter radius
+    maxPix = mask_inv.max()
+    for i in range(x):
+        for j in range(y):
+            if np.sqrt((i-ci)**2+(j-cj)**2) > cr:
+                mask_inv[i][j] = maxPix
+    text = pytesseract.image_to_string(mask_inv, lang='eng', config='--psm 10')
+
+    return text.upper()
+
+# In Progress
+def processGreenTile(img_color, img_grey):
+    # specify circle parameters: centre ij and radius
+    (x,y) = img_grey.shape
+    (ci,cj) = (int(x/2), int(y/2))
+    cr=int(y*.5*.65)
+
+    # define range of black color in HSV
+    lower_val = np.array([0,0,0])
+    upper_val = np.array([20,255,127])
+
+    # Threshold the HSV image to get only black colors
+    mask = cv2.inRange(img_color, lower_val, upper_val)
+
+    # invert mask to get black symbols on white background
+    mask_inv = cv2.bitwise_not(mask)
+
+    # Min the value outside the letter radius
+    maxPix = mask_inv.max()
+    for i in range(x):
+        for j in range(y):
+            if np.sqrt((i-ci)**2+(j-cj)**2) > cr:
+                mask_inv[i][j] = maxPix
+    text = pytesseract.image_to_string(mask_inv, lang='eng', config='--psm 10')
+
+    return text.upper()
+
+# In Progress
+def processGoldTile(img_color, img_grey):
+   # specify circle parameters: centre ij and radius
+    (x,y) = img_grey.shape
+    (ci,cj) = (int(x/2), int(y/2))
+    cr=int(y*.5*.65)
+
+     # define range of black color in HSV
+    lower_val = np.array([0,0,0])
+    upper_val = np.array([10,255,127])
+
+    # Threshold the HSV image to get only black colors
+    mask = cv2.inRange(img_color, lower_val, upper_val)
+    
+    # invert mask to get black symbols on white background
+    mask_inv = cv2.bitwise_not(mask)
+
     # Min the value outside the letter radius
     maxPix = mask_inv.max()
     for i in range(x):
@@ -142,64 +196,6 @@ def processFireTile(img_color, img_grey):
     cv2.imshow(text, mask_inv)
     cv2.waitKey(0)
 
-    # img = cv2.boxFilter(img_color,-1, (15,15), normalize = True)
-
-
-   
-    
-    # th3 = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,11,2)
-    # image_from_array = Image.fromarray(th3)
-    # #We can send the array directly to OCR, but I like to see the image.
-    # start_time = time.time()
-    # text = pytesseract.image_to_string(img, lang='eng', config='--psm 10')
-    # cur_time = time.time()
-    # cv2.imshow(text, th3)
-    # cv2.waitKey(0)
-    # print("OCR took {} seconds.".format((cur_time-start_time)))
-    return text.upper()
-
-# In Progress
-def processGreenTile(img, img_grey):
-    # specify circle parameters: centre ij and radius
-    (x,y) = img_grey.shape
-    (ci,cj) = (int(x/2), int(y/2))
-    cr=int(y*.5*.7)
-
-    # Min the value outside the letter radius
-    maxPix = img_grey.max()
-    for i in range(x):
-        for j in range(y):
-            if np.sqrt((i-ci)**2+(j-cj)**2) > cr:
-                img_grey[i][j] = maxPix
-    
-    # ret,thresh_binary_inv = cv2.threshold(z,127,255,cv2.THRESH_BINARY)
-    image_from_array = Image.fromarray(img_grey)
-    # cv2.imshow("normal", img_grey)
-    # cv2.waitKey(0)
-    #We can send the array directly to OCR, but I like to see the image.
-    text = pytesseract.image_to_string(image_from_array, lang='eng', config='--psm 10')
-    return text.upper()
-
-# In Progress
-def processGoldTile(img, img_grey):
-    # specify circle parameters: centre ij and radius
-    (x,y) = img_grey.shape
-    (ci,cj) = (int(x/2), int(y/2))
-    cr=int(y*.5*.7)
-
-    # Min the value outside the letter radius
-    maxPix = img_grey.max()
-    for i in range(x):
-        for j in range(y):
-            if np.sqrt((i-ci)**2+(j-cj)**2) > cr:
-                img_grey[i][j] = maxPix
-    
-    # ret,thresh_binary_inv = cv2.threshold(z,127,255,cv2.THRESH_BINARY)
-    image_from_array = Image.fromarray(img_grey)
-    # cv2.imshow("normal", img_grey)
-    # cv2.waitKey(0)
-    #We can send the array directly to OCR, but I like to see the image.
-    text = pytesseract.image_to_string(image_from_array, lang='eng', config='--psm 10')
     return text.upper()
 
 def processImg(img):
@@ -214,7 +210,6 @@ def processImg(img):
     bgX = int(.2*x)
     bgY = int(.2*y)
     bgColor = zColor[bgX,bgY, :]
-    # print(bgColor, img.split('_')[1].split('.png')[0])
 
     # Determine type of tile:
     ratio = float(bgColor[2]/bgColor[1])
@@ -231,10 +226,12 @@ def processImg(img):
     elif ratio > 0.95:
         print("See as Gold")
         text = processGoldTile(zColor, z)
+        print('Should have been: {}, got {}'.format(img.split('_')[0], text))
     # Green
     else:
         print("See as Green")
         text = processGreenTile(zColor, z)
+        print('Should have been: {}, got {}'.format(img.split('_')[0], text))
 
     return text
 
@@ -245,10 +242,6 @@ def genLetterArray(lettersPath):
         # Reading picture with opencv
         img = lettersPath + '/' + filename
         text = processImg(img)
-        if filename.split('_')[0].upper() != text:
-            # print('Should have been: {}, got {}'.format(filename.split('_')[0], text))
-            print(filename)
-
         letters.append(text)
     # return letters
     return testArray
