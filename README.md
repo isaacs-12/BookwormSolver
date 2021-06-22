@@ -18,7 +18,11 @@ For special tiles: I use the color images, and not greyscale. I then apply a mas
 
 The exact hue/saturation/value numbers varied for each type of tile, but the outcomes were the same.
 
-The graph is then traversed, and is weighted as necessary based on tile value (green, gold, diamond/blue) or urgency (fire).
+The graph is then traversed with a sort of DFS algorithm, and is weighted as necessary based on tile value (green, gold, diamond/blue) or urgency (fire). Graph traversal is very fast as well with my implementation, varying from 0.007-0.010 seconds for the whole board. This is aided by:
+- recognizing dead ends immediately
+- using sets for the prefixes of every valid word, which gives constant-time complexity for checking containment. 
 
-Features to come:
+At the lowest end of efficiency, for argument say going down just four letters deep starting at each of the 52 tiles, we'd have in the ballpark of tens of thousands of branches/iterations possible branches to explore. But the method employed here will only investigate each promising path, which is in the neighborhood of 2-300 branches and only ~1000 iterations. Further improvements could be made still though. However the bottleneck is OCR and not traversal, so it wasn't a priority.
+
+**Features to come:**
 - Smart solving to bring the board closer to, and prioritize bonus words.
