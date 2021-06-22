@@ -2,11 +2,15 @@
 
 from typing import Mapping
 import LetterGetter
+import time
 
-dictFile = "TestWords.txt"
-allWords = "FullUncompressedDict.txt"
+dictFile = "../Dicts/TestWords.txt"
+allWords = "../Dicts/FullUncompressedDict.txt"
 
 foundWords = []
+prefixes = set([])
+validWords = set([])
+checkedWords = 0
 
 # types
 Graph = Mapping[int, LetterGetter.Node]
@@ -18,9 +22,10 @@ def genWordFromPath(graph: Graph, path):
         word += str(graph[id].value)
     return word
 
-def find_all_words(graph: Graph, startNode: LetterGetter.Node, prefixes, validWords, path):
+def FindAllWords(graph: Graph, startNode: LetterGetter.Node, path):
     global foundWords
-
+    global checkedWords
+    checkedWords += 1
     soFar = genWordFromPath(graph, path)
 
     if soFar in validWords and len(soFar) >= 3:
@@ -33,14 +38,14 @@ def find_all_words(graph: Graph, startNode: LetterGetter.Node, prefixes, validWo
             if str(genWordFromPath(graph, newPath)) not in prefixes:
                 # We are at a dead end/went too far
                 continue
-            return find_all_words(graph, newNode, prefixes, validWords, newPath)
+            FindAllWords(graph, newNode, newPath)
 
-def traverseGraph(graph: Graph, prefixes, validWords):
+def traverseGraph(graph: Graph):
     for start in graph.keys():
         startNode = graph[start]
         if str(startNode.value) not in prefixes:
             continue
-        find_all_words(graph, startNode, prefixes, validWords, [startNode.nodeId])
+        FindAllWords(graph, startNode, [startNode.nodeId])
     return
 
 
@@ -54,24 +59,30 @@ def getPrefixes(validWords):
     return set(prefixes)
 
 def dictWords(words):
-    newWords = []
+    newWords = set([])
     for word in words:
-        newWords.append(word.split('\n')[0])
-    wordSet = set(newWords)
-    return wordSet
+        newWords.add(word.split('\n')[0])
+    return newWords
 
 def main():
     graph = LetterGetter.main()
     words = open(allWords, 'r').readlines()
 
+    global validWords
     validWords = dictWords(words)
     print(len(validWords))
 
+    global prefixes
     prefixes = getPrefixes(validWords)
     print(len(prefixes))
     
-    traverseGraph(graph, prefixes, validWords)
+    start_time = time.time()
+    traverseGraph(graph)
+    cur_time = time.time()
+    print("Traversal took {} seconds.".format((cur_time-start_time)))
     global foundWords
-    print("Found words: {}".format(foundWords))
+    global checkedWords
+    # print("Checked words: {}".format(checkedWords))
+    print("Found words: {}".format(len(foundWords)))
 
 main()
